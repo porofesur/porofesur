@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+	<meta charset="UTF-8">
+	<title>مدیریت گدام</title>
+	<style>
+		body { font-family: Tahoma, Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+		.container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #ccc; }
+		h2 { color: #2c3e50; }
+		form { margin-bottom: 25px; }
+		label { display: block; margin-bottom: 6px; }
+		input, select { padding: 7px; margin-bottom: 12px; width: 100%; border: 1px solid #bbb; border-radius: 4px; }
+		button { background: #2980b9; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; }
+		button:hover { background: #1a5a7a; }
+		table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+		th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+		th { background: #eaeaea; }
+		.out-btn { background: #e67e22; }
+		.out-btn:hover { background: #b35c00; }
+	</style>
+</head>
+<body>
+<div class="container">
+	<h2>مدیریت گدام</h2>
+	<form id="addForm">
+		<label>نام جنس:</label>
+		<input type="text" id="itemName" required>
+	<label>قیمت واحد (افغانی):</label>
+		<input type="number" id="itemPrice" min="0" required>
+		<label>تعداد:</label>
+		<input type="number" id="itemQty" min="1" required>
+		<button type="submit">افزودن جنس</button>
+	</form>
+
+	<form id="outForm">
+		<label>خروج جنس:</label>
+		<select id="outItemSelect"></select>
+		<label>تعداد خروج:</label>
+		<input type="number" id="outQty" min="1" value="1">
+		<button type="submit" class="out-btn">ثبت خروج</button>
+	</form>
+
+	<h3>لیست اجناس و موجودی</h3>
+	<table id="itemsTable">
+		<thead>
+			<tr>
+				<th>نام جنس</th>
+				<th>قیمت واحد (افغانی)</th>
+				<th>تعداد</th>
+				<th>قیمت کل (افغانی)</th>
+				<th>عملیات</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+</div>
+<script>
+// --- مدیریت داده‌ها در LocalStorage ---
+function getItems() {
+	return JSON.parse(localStorage.getItem('warehouse_items') || '[]');
+}
+function saveItems(items) {
+	localStorage.setItem('warehouse_items', JSON.stringify(items));
+}
+
+function renderTable() {
+	const items = getItems();
+	const tbody = document.querySelector('#itemsTable tbody');
+	tbody.innerHTML = '';
+	items.forEach((item, idx) => {
+		const total = item.price * item.qty;
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td>${item.name}</td>
+			<td>${item.price}</td>
+			<td>${item.qty}</td>
+			<td>${total}</td>
+			<td>
+				<button onclick="deleteItem(${idx})" style='background:#c0392b'>حذف</button>
+				<button onclick="returnStock(${idx})" style='background:#27ae60;margin-right:5px'>برگشت موجودی</button>
+			</td>
+		`;
+		tbody.appendChild(tr);
+	});
+	renderOutSelect();
+}
+
+function deleteItem(idx) {
+	if(confirm('آیا مطمئن هستید که می‌خواهید این جنس را حذف کنید؟')) {
+		let items = getItems();
+		items.splice(idx, 1);
+		saveItems(items);
+		renderTable();
+	}
+}
+
+function returnStock(idx) {
+	let qty = prompt('چه تعداد به موجودی اضافه شود؟', '1');
+	qty = parseInt(qty);
+	if(isNaN(qty) || qty < 1) return;
+	let items = getItems();
+	items[idx].qty += qty;
+	saveItems(items);
+	renderTable();
+}
+
+function renderOutSelect() {
+	const items = getItems();
+	const select = document.getElementById('outItemSelect');
+	select.innerHTML = '';
+	items.forEach((item, idx) => {
+		if(item.qty > 0) {
+			const opt = document.createElement('option');
+			opt.value = idx;
+			opt.textContent = item.name + ' (موجودی: ' + item.qty + ')';
+			select.appendChild(opt);
+		}
+	});
+	if(select.options.length === 0) {
+		select.innerHTML = '<option>موجودی خالی است</option>';
+	}
+}
+
+document.getElementById('addForm').onsubmit = function(e) {
+	e.preventDefault();
+	const name = document.getElementById('itemName').value.trim();
+	const price = parseInt(document.getElementById('itemPrice').value);
+	const qty = parseInt(document.getElementById('itemQty').value);
+	if(!name || price < 0 || qty < 1) return;
+	let items = getItems();
+	// اگر جنس تکراری بود، فقط موجودی و قیمت را به‌روزرسانی کن
+	const idx = items.findIndex(i => i.name === name);
+	if(idx > -1) {
+		items[idx].qty += qty;
+		items[idx].price = price;
+	} else {
+		items.push({ name, price, qty });
+	}
+	saveItems(items);
+	renderTable();
+	this.reset();
+};
+
+document.getElementById('outForm').onsubmit = function(e) {
+	e.preventDefault();
+	const select = document.getElementById('outItemSelect');
+	const idx = parseInt(select.value);
+	const outQty = parseInt(document.getElementById('outQty').value);
+	let items = getItems();
+	if(isNaN(idx) || outQty < 1 || !items[idx] || items[idx].qty < outQty) return;
+	items[idx].qty -= outQty;
+	saveItems(items);
+	renderTable();
+	this.reset();
+};
+
+// بارگذاری اولیه
+renderTable();
+</script>
+</body>
+</html>

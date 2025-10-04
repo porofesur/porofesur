@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>افزودن جنس جدید</title>
+    <style>body{font-family:tahoma;background:#111;color:#fff;}.container{max-width:400px;margin:60px auto;background:#222;padding:30px;border-radius:16px;box-shadow:0 4px 24px #0006;text-align:center}form{margin-bottom:25px}label{display:block;margin-bottom:6px}input{padding:9px;margin-bottom:14px;width:100%;border:1px solid #444;background:#111;color:#fff;border-radius:6px}button{background:#fff;color:#111;border:none;padding:12px 0;border-radius:8px;cursor:pointer;width:100%;font-size:18px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002}button:hover{background:#111;color:#fff;border:1px solid #fff;box-shadow:0 4px 16px #0004}.msg{color:#27ae60;margin-bottom:10px}</style>
+</head>
+<body>
+<div class="container">
+    <h2>افزودن جنس جدید</h2>
+    <div class="msg" id="msg"></div>
+    <form id="addForm">
+        <label>نام جنس:</label>
+        <input type="text" id="itemName" required>
+        <label>قیمت واحد (افغانی):</label>
+        <input type="number" id="itemPrice" min="0" required>
+        <label>تعداد:</label>
+        <input type="number" id="itemQty" min="1" required>
+        <button type="submit">افزودن جنس</button>
+    </form>
+    <a href="warehouse.html" style="display:block;margin:30px auto 0 auto;max-width:200px;background:#fff;color:#111;text-decoration:none;border-radius:8px;padding:12px 0;font-size:18px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;text-align:center">بازگشت به مدیریت گدام</a>
+</div>
+<script>
+function getItems() {
+    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">
+    powered by porofesur
+    </footer>
+}
+function saveItems(items) {
+    localStorage.setItem('warehouse_items', JSON.stringify(items));
+}
+document.getElementById('addForm').onsubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('itemName').value.trim();
+    const price = parseInt(document.getElementById('itemPrice').value);
+    const qty = parseInt(document.getElementById('itemQty').value);
+    if(!name || price < 0 || qty < 1) return;
+    let items = getItems();
+    const idx = items.findIndex(i => i.name === name);
+    if(idx > -1) {
+        items[idx].qty += qty;
+        items[idx].price = price;
+    } else {
+        items.push({ name, price, qty });
+    }
+    saveItems(items);
+    document.getElementById('msg').textContent = 'جنس با موفقیت اضافه شد!';
+    this.reset();
+};
+</script>
+</body>
+    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">powred by porofesr</footer>
+</html>

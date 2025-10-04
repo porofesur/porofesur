@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ورود کاربر</title>
+    <style>body{font-family:tahoma;background:#111;color:#fff;}.container{max-width:400px;margin:60px auto;background:#222;padding:30px;border-radius:16px;box-shadow:0 4px 24px #0006}label{display:block;margin-bottom:6px}input{padding:9px;margin-bottom:14px;width:100%;border:1px solid #444;background:#111;color:#fff;border-radius:6px}button{background:#fff;color:#111;border:none;padding:12px 0;border-radius:8px;cursor:pointer;width:100%;font-size:18px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002}button:hover{background:#111;color:#fff;border:1px solid #fff;box-shadow:0 4px 16px #0004}.msg{color:#e74c3c;margin-bottom:10px}</style>
+</head>
+<body>
+<div class="container">
+    <h2>ورود کاربر</h2>
+    <div class="msg" id="msg"></div>
+    <form id="loginForm">
+    <label>نام کاربری:</label>
+    <div id="userSelectBox"></div>
+    <label>رمز عبور:</label>
+    <input type="password" id="password" required>
+    <button type="submit">ورود</button>
+    </form>
+    <p>حساب ندارید؟ <a href="register.html">ثبت‌نام کنید</a></p>
+</div>
+<script>
+function getUsers() {
+    return JSON.parse(localStorage.getItem('warehouse_users')||'[]');
+}
+
+// نمایش یوزرها به صورت لیست مخفی
+function renderUserSelect() {
+    const users = getUsers();
+    const box = document.getElementById('userSelectBox');
+    if(users.length === 0) {
+        box.innerHTML = '<input type="text" id="username" required placeholder="نام کاربری">';
+        return;
+    }
+    let html = '';
+    html += `<input type="text" id="username" value="${users[0].username}" readonly style="cursor:pointer;background:#f0f0f0">`;
+    if(users.length > 1) {
+        html += `<button type="button" id="showMoreUsers" style="margin-right:8px">نمایش سایر کاربران</button>`;
+        html += `<div id="moreUsers" style="display:none;margin-top:8px;text-align:right"></div>`;
+    }
+    box.innerHTML = html;
+    if(users.length > 1) {
+        document.getElementById('showMoreUsers').onclick = function() {
+            const moreBox = document.getElementById('moreUsers');
+            if(moreBox.style.display === 'none') {
+                let list = '';
+                for(let i=1;i<users.length;i++) {
+                    list += `<div style='margin-bottom:4px;'><a href='#' onclick='selectUser("${users[i].username}");return false;'>${users[i].username}</a></div>`;
+                }
+                moreBox.innerHTML = list;
+                moreBox.style.display = 'block';
+            } else {
+                moreBox.style.display = 'none';
+            }
+        };
+    }
+}
+
+window.selectUser = function(username) {
+    document.getElementById('username').value = username;
+    document.getElementById('moreUsers').style.display = 'none';
+}
+
+renderUserSelect();
+
+document.getElementById('loginForm').onsubmit = function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    let users = getUsers();
+    const user = users.find(u=>u.username===username && u.password===password);
+    if(!user) {
+        document.getElementById('msg').textContent = 'نام کاربری یا رمز عبور اشتباه است!';
+        return;
+    }
+    localStorage.setItem('warehouse_loggedin', JSON.stringify(user));
+    window.location = 'warehouse.html';
+};
+</script>
+</body>
+    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">powered by porofesur</footer>
+</html>

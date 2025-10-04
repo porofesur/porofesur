@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>مدیریت گدام</title>
+    <style>body{font-family:tahoma;background:#111;color:#fff;}.container{max-width:700px;margin:40px auto;background:#222;padding:30px;border-radius:16px;box-shadow:0 4px 24px #0006}h2{color:#fff}form{margin-bottom:25px}label{display:block;margin-bottom:6px}input,select{padding:9px;margin-bottom:14px;width:100%;border:1px solid #444;background:#111;color:#fff;border-radius:6px}button{background:#fff;color:#111;border:none;padding:12px 0 12px 0;border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002}button:hover{background:#111;color:#fff;border:1px solid #fff;box-shadow:0 4px 16px #0004}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #444;padding:10px;text-align:center}th{background:#111;color:#fff}.out-btn{background:#e67e22;color:#fff}.out-btn:hover{background:#b35c00;color:#fff}.del-btn{background:#c0392b;color:#fff}.del-btn:hover{background:#922b21;color:#fff}.ret-btn{background:#27ae60;color:#fff}.ret-btn:hover{background:#145a32;color:#fff}.logout{background:#888;color:#fff;float:left;margin-bottom:20px;border-radius:8px;padding:10px 18px}</style>
+</head>
+<body>
+<div class="container">
+    <a href="porofesur.html" style="display:inline-block;background:#fff;color:#111;text-decoration:none;border-radius:8px;padding:10px 24px;font-size:16px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;margin-bottom:18px;float:right;">صفحه اصلی</a>
+    <button class="logout" onclick="logout()">خروج از حساب</button>
+    <h2>مدیریت گدام</h2>
+    <div id="welcome"></div>
+
+    <!-- بخش تنظیمات/اپشن -->
+    <section style="margin-bottom:32px;padding-bottom:18px;border-bottom:2px solid #444;">
+        <details style="margin-bottom:0;float:left;">
+            <summary style="cursor:pointer;font-size:28px;line-height:1;user-select:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:none;outline:none;transition:background 0.2s;" title="تنظیمات">⚙️</summary>
+            <div style="margin-bottom:18px">
+                <a href="additem.html" style="display:block;background:#fff;color:#111;text-decoration:none;border-radius:8px;padding:12px 0;font-size:16px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;text-align:center;margin-bottom:10px">افزودن جنس جدید (فاکتور خرید)</a>
+                <button onclick="openFirstStockModal()" style="background:#fff;color:#111;border:none;border-radius:8px;padding:12px 0;width:100%;font-size:16px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;cursor:pointer">ثبت اول دوره جنس</button>
+            </div>
+            <form id="addUserForm" style="margin-top:15px;min-width:220px;display:none">
+                <label>نام کاربری جدید:</label>
+                <input type="text" id="newUsername" required>
+                <label>رمز عبور جدید:</label>
+                <input type="password" id="newPassword" required>
+                <button type="submit">ثبت کاربر جدید</button>
+                <div id="userMsg" style="color:#c0392b;margin-top:8px"></div>
+            </form>
+            <div id="userListBox" style="margin-top:18px"></div>
+        </details>
+        <div style="clear:both"></div>
+    </section>
+
+    <!-- بخش افزودن جنس -->
+    <section style="margin-bottom:32px;padding-bottom:18px;border-bottom:2px solid #444;">
+        <a href="additem.html" style="display:block;background:#fff;color:#111;text-decoration:none;border-radius:8px;padding:16px 0;font-size:18px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;text-align:center;">افزودن جنس جدید</a>
+    </section>
+
+    <!-- بخش خروج جنس -->
+    <section style="margin-bottom:32px;padding-bottom:18px;border-bottom:2px solid #444;">
+        <a href="outitem.html" style="display:block;background:#fff;color:#111;text-decoration:none;border-radius:8px;padding:16px 0;font-size:18px;font-weight:bold;transition:all 0.2s;box-shadow:0 2px 8px #0002;text-align:center;">خروج جنس از گدام</a>
+    </section>
+
+    <!-- بخش جدول موجودی -->
+    <section>
+        <h3>لیست اجناس و موجودی</h3>
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>نام جنس</th>
+                    <th>قیمت واحد (افغانی)</th>
+                    <th>تعداد</th>
+                    <th>قیمت کل (افغانی)</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+</div>
+<script>
+// بررسی ورود
+const user = JSON.parse(localStorage.getItem('warehouse_loggedin'));
+if(!user) { window.location = 'login.html'; }
+document.getElementById('welcome').innerHTML = '<b>کاربر:</b> '+user.username;
+function logout() {
+    localStorage.removeItem('warehouse_loggedin');
+    window.location = 'login.html';
+}
+function getItems() {
+    return JSON.parse(localStorage.getItem('warehouse_items') || '[]');
+}
+function saveItems(items) {
+    localStorage.setItem('warehouse_items', JSON.stringify(items));
+}
+function renderTable() {
+    const items = getItems();
+    const tbody = document.querySelector('#itemsTable tbody');
+    tbody.innerHTML = '';
+    items.forEach((item, idx) => {
+        const total = item.price * item.qty;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.price}</td>
+            <td>${item.qty}</td>
+            <td>${total}</td>
+            <td>
+                <button onclick="deleteItem(${idx})" class='del-btn'>حذف</button>
+                <button onclick="returnStock(${idx})" class='ret-btn' style='margin-right:5px'>برگشت موجودی</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    renderOutSelect();
+}
+function renderOutSelect() {
+    const items = getItems();
+    const select = document.getElementById('outItemSelect');
+    select.innerHTML = '';
+    items.forEach((item, idx) => {
+        if(item.qty > 0) {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = item.name + ' (موجودی: ' + item.qty + ')';
+            select.appendChild(opt);
+        }
+    });
+    if(select.options.length === 0) {
+        select.innerHTML = '<option>موجودی خالی است</option>';
+    }
+}
+document.getElementById('addForm').onsubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('itemName').value.trim();
+    const price = parseInt(document.getElementById('itemPrice').value);
+    const qty = parseInt(document.getElementById('itemQty').value);
+    if(!name || price < 0 || qty < 1) return;
+    let items = getItems();
+    const idx = items.findIndex(i => i.name === name);
+    if(idx > -1) {
+        items[idx].qty += qty;
+        items[idx].price = price;
+    } else {
+        items.push({ name, price, qty });
+    }
+    saveItems(items);
+    renderTable();
+    this.reset();
+};
+document.getElementById('outForm').onsubmit = function(e) {
+    e.preventDefault();
+    const select = document.getElementById('outItemSelect');
+    const idx = parseInt(select.value);
+    const outQty = parseInt(document.getElementById('outQty').value);
+    let items = getItems();
+    if(isNaN(idx) || outQty < 1 || !items[idx] || items[idx].qty < outQty) return;
+    items[idx].qty -= outQty;
+    saveItems(items);
+    renderTable();
+    this.reset();
+};
+function deleteItem(idx) {
+    if(confirm('آیا مطمئن هستید که می‌خواهید این جنس را حذف کنید؟')) {
+        let items = getItems();
+        items.splice(idx, 1);
+        saveItems(items);
+        renderTable();
+    }
+}
+function returnStock(idx) {
+    let qty = prompt('چه تعداد به موجودی اضافه شود؟', '1');
+    qty = parseInt(qty);
+    if(isNaN(qty) || qty < 1) return;
+    let items = getItems();
+    items[idx].qty += qty;
+    saveItems(items);
+    renderTable();
+}
+
+
+
+// فقط یک ادمین hares با رمز 1234
+function getUsers() {
+    return JSON.parse(localStorage.getItem('warehouse_users')||'[{"username":"hares","password":"1234"}]');
+}
+function saveUsers(users) {
+    localStorage.setItem('warehouse_users', JSON.stringify(users));
+}
+// اگر کاربران قبلی وجود دارند، فقط ادمین hares را جایگزین کن
+localStorage.setItem('warehouse_users', JSON.stringify([{username:'hares',password:'1234'}]));
+
+const addUserForm = document.getElementById('addUserForm');
+const userListBox = document.getElementById('userListBox');
+if(user && user.username === 'hares') {
+    if(addUserForm) addUserForm.style.display = '';
+    renderUserList();
+} else {
+    if(addUserForm) addUserForm.style.display = 'none';
+}
+
+function renderUserList() {
+    if(!userListBox) return;
+    let users = getUsers();
+    let html = '<b>لیست کاربران:</b><ul style="margin-top:8px;padding-right:18px">';
+    users.forEach((u, i) => {
+        html += `<li>${u.username} <span style=\"color:#aaa;font-size:13px\">(ادمین)</span></li>`;
+    });
+    html += '</ul>';
+    userListBox.innerHTML = html;
+}
+
+renderTable();
+</script>
+</body>
+    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">powered by porofesur</footer>
+</html>
