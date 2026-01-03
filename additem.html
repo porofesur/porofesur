@@ -22,9 +22,7 @@
 </div>
 <script>
 function getItems() {
-    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">
-    powered by porofesur
-    </footer>
+    return JSON.parse(localStorage.getItem('warehouse_items') || '[]');
 }
 function saveItems(items) {
     localStorage.setItem('warehouse_items', JSON.stringify(items));
@@ -49,5 +47,5 @@ document.getElementById('addForm').onsubmit = function(e) {
 };
 </script>
 </body>
-    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">powred by porofesr</footer>
+    <footer style="margin-top:40px;text-align:center;color:#aaa;font-size:15px;">powered by porofesur</footer>
 </html>
